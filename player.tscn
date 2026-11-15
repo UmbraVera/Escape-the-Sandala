@@ -1,0 +1,207 @@
+[gd_scene format=3 uid="uid://b4locmxaumksb"]
+
+[ext_resource type="Texture2D" uid="uid://8inr673r5a06" path="res://bounce_back_sprites/boy_babouche_hit.png" id="1_hqtel"]
+[ext_resource type="Texture2D" uid="uid://7qh2u4fx01gj" path="res://bounce_back_sprites/boy_babouche_jump.png" id="2_sweqy"]
+[ext_resource type="Texture2D" uid="uid://138x0b3fsgyb" path="res://bounce_back_sprites/boy_babouche_run.png" id="3_2hs0m"]
+[ext_resource type="Texture2D" uid="uid://dktqu4ps8tkj" path="res://bounce_back_sprites/boy_babouche_slide.png" id="4_1jxqw"]
+
+[sub_resource type="GDScript" id="GDScript_hqtel"]
+script/source = "extends Node2D
+
+var obstacle_scene = preload(\"res://obstacle.tscn\")
+var LANES = [114, 270, 426]
+
+const START_SPEED := 220.0
+const MAX_SPEED := 650.0
+const SPEED_UP := 6.0      # speed gained per second
+
+var speed := START_SPEED
+var elapsed := 0.0
+var timer := 1.5
+var pickup_timer := 2.0
+var running := true
+
+func _process(delta):
+	if not running:
+		return
+	elapsed += delta
+	speed = min(MAX_SPEED, START_SPEED + elapsed * SPEED_UP)
+	var pace = 350.0 / speed   # faster game = things come more often
+
+	timer -= delta
+	if timer <= 0:
+		timer = randf_range(1.0, 1.6) * pace
+		spawn_obstacle()
+
+	pickup_timer -= delta
+	if pickup_timer <= 0:
+		pickup_timer = randf_range(1.4, 2.2) * pace
+		spawn_pickups()
+
+func spawn_obstacle():
+	var type = [\"donkey\", \"cart\", \"fruit_box\", \"awning\"].pick_random()
+	if type == \"cart\" and cart_on_screen():
+		type = [\"donkey\", \"fruit_box\", \"awning\"].pick_random()
+	var free = []
+	for lane in 3:
+		if lane_has(\"obstacles\", lane, 250):
+			continue
+		if type == \"cart\" and lane_has(\"pickups\", lane, 250):
+			continue
+		free.append(lane)
+	if free.is_empty():
+		return
+	spawn(type, free.pick_random(), -170)
+
+func spawn_pickups():
+	var free = []
+	for lane in 3:
+		if lane_has(\"obstacles\", lane, 450, [\"cart\"]):
+			continue
+		if lane_has(\"pickups\", lane, 100):
+			continue
+		free.append(lane)
+	if free.is_empty():
+		return
+	var lane = free.pick_random()
+	var r = randf()
+	if r < 0.2:
+		spawn(\"plate\", lane, -100)
+	elif r < 0.3:
+		spawn(\"atay\", lane, -100)
+	else:
+		for i in range(4):
+			spawn(\"coin\", lane, -100 - i * 70)
+
+func lane_has(group, lane, max_y, types = []):
+	for o in get_tree().get_nodes_in_group(group):
+		if abs(o.position.x - LANES[lane]) < 10 and o.position.y < max_y:
+			if types.is_empty() or o.type in types:
+				return true
+	return false
+
+func cart_on_screen():
+	for o in get_tree().get_nodes_in_group(\"obstacles\"):
+		if o.type == \"cart\" and o.position.y < 480:
+			return true
+	return false
+
+func spawn(type, lane, y):
+	var o = obstacle_scene.instantiate()
+	o.type = type
+	o.position = Vector2(LANES[lane], y)
+	add_child(o)
+	move_child(o, 1)
+
+func game_over():
+	running = false
+	speed = 0
+	$HUD.show_message(\"Mama caught you!\")
+	await get_tree().create_timer(2.0).timeout
+	get_tree().reload_current_scene()
+"
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_d21ai"]
+atlas = ExtResource("1_hqtel")
+region = Rect2(0, 0, 32, 54)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rj586"]
+atlas = ExtResource("2_sweqy")
+region = Rect2(0, 0, 32, 54)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4d7sh"]
+atlas = ExtResource("2_sweqy")
+region = Rect2(32, 0, 32, 54)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0e48y"]
+atlas = ExtResource("3_2hs0m")
+region = Rect2(0, 0, 32, 54)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_epypp"]
+atlas = ExtResource("3_2hs0m")
+region = Rect2(32, 0, 32, 54)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0hol4"]
+atlas = ExtResource("3_2hs0m")
+region = Rect2(64, 0, 32, 54)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_q6r6c"]
+atlas = ExtResource("3_2hs0m")
+region = Rect2(96, 0, 32, 54)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ir8iy"]
+atlas = ExtResource("4_1jxqw")
+region = Rect2(0, 0, 32, 54)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hqns4"]
+atlas = ExtResource("4_1jxqw")
+region = Rect2(32, 0, 32, 54)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_51fql"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_d21ai")
+}],
+"loop": 1,
+"name": &"hit",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rj586")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4d7sh")
+}],
+"loop": 1,
+"name": &"jump",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 0.6,
+"texture": SubResource("AtlasTexture_0e48y")
+}, {
+"duration": 0.6,
+"texture": SubResource("AtlasTexture_epypp")
+}, {
+"duration": 0.6,
+"texture": SubResource("AtlasTexture_0hol4")
+}, {
+"duration": 0.6,
+"texture": SubResource("AtlasTexture_q6r6c")
+}],
+"loop": 1,
+"name": &"run",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ir8iy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hqns4")
+}],
+"loop": 1,
+"name": &"slide",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mq8aq"]
+size = Vector2(13.25, 28.5)
+
+[node name="Player" type="Area2D" unique_id=1391474575]
+position = Vector2(276, 828)
+scale = Vector2(2, 2)
+script = SubResource("GDScript_hqtel")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=2118070403]
+scale = Vector2(1.3595005, 1.3055556)
+sprite_frames = SubResource("SpriteFrames_51fql")
+animation = &"hit"
+autoplay = "run"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2072349668]
+position = Vector2(0.7540283, 7)
+scale = Vector2(2, 2)
+shape = SubResource("RectangleShape2D_mq8aq")
