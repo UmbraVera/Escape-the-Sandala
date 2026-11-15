@@ -1,17 +1,3 @@
-BOUNCE BACK: MOROCCAN EDITION - character sprites
-Original pixel art, made for this game. Free to use and modify.
-
-FILES (each file is a horizontal strip of frames)
-  Boy  - frame size 32 x 54 px
-    boy_<outfit>_run.png    4 frames  (loop)
-    boy_<outfit>_jump.png   2 frames  (no loop)
-    boy_<outfit>_slide.png  2 frames  (loop)
-    boy_<outfit>_hit.png    1 frame   (stumble when he hits an obstacle)
-    outfits: base (t-shirt), djellaba (green + babouches),
-             babouche (gandoura + fez + golden babouches), selham (purple hooded cloak)
-  Mama - frame size 40 x 56 px
-    mama_run.png            4 frames  (loop, waving her slipper!)
-
 HOW TO USE IN GODOT 4
 1. Drag the whole folder into res://assets/
 2. Project > Project Settings > Rendering > Textures > Default Texture Filter = Nearest
